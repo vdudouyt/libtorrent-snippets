@@ -1,0 +1,69 @@
+From ac19cc6b1764aba764025bd2658da64bcb59c62c Mon Sep 17 00:00:00 2001
+From: Valentin Dudouyt <valentin.dudouyt@gmail.com>
+Date: Wed, 15 Apr 2015 15:49:53 +0600
+Subject: [PATCH 1/2] Implemented add_file() with virtpath
+
+---
+ include/libtorrent/file_storage.hpp |  3 +++
+ src/file_storage.cpp                | 10 ++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/include/libtorrent/file_storage.hpp b/include/libtorrent/file_storage.hpp
+index 3129347..e58d2c8 100644
+--- a/include/libtorrent/file_storage.hpp
++++ b/include/libtorrent/file_storage.hpp
+@@ -177,6 +177,8 @@ namespace libtorrent
+ 		// the size of this file
+ 		boost::uint64_t size:48;
+ 
++		std::string real_path;
++
+ 		// the number of characters in the name. If this is
+ 		// name_is_owned, name is null terminated and owned by this object
+ 		// (i.e. it should be freed in the destructor). If
+@@ -289,6 +291,7 @@ namespace libtorrent
+ 		// valid throughout the life time of the file_storage.
+ 		// 
+ 		// Currently, the ``filehash`` from ``file_entry`` is not used.
++		void add_file(std::string const& file, size_type size, std::string const &vname);
+ 		void add_file(file_entry const& e, char const* filehash = 0);
+ 		void add_file(std::string const& p, size_type size, int flags = 0
+ 			, std::time_t mtime = 0, std::string const& s_p = "");
+diff --git a/src/file_storage.cpp b/src/file_storage.cpp
+index 496466e..1bc36a9 100644
+--- a/src/file_storage.cpp
++++ b/src/file_storage.cpp
+@@ -401,6 +401,13 @@ namespace libtorrent
+ 		return ret;
+ 	}
+ 
++	void file_storage::add_file(std::string const& file, size_type size, std::string const &real_path)
++	{
++		this->add_file(file, size);
++		internal_file_entry& e = m_files.back();
++		e.real_path = real_path;
++	}
++
+ 	void file_storage::add_file(std::string const& file, size_type size, int flags
+ 		, std::time_t mtime, std::string const& symlink_path)
+ 	{
+@@ -532,6 +539,8 @@ namespace libtorrent
+ 		TORRENT_ASSERT_PRECOND(index >= 0 && index < int(m_files.size()));
+ 		internal_file_entry const& fe = m_files[index];
+ 
++		if(fe.real_path.size() > 0) return fe.real_path;
++
+ 		// -2 means this is an absolute path filename
+ 		if (fe.path_index == -2) return fe.filename();
+ 
+@@ -629,6 +638,7 @@ namespace libtorrent
+ 	std::string file_storage::file_path(internal_file_entry const& fe
+ 		, std::string const& save_path) const
+ 	{
++		std::cout << "file_path(2)" << std::endl;
+ 		int index = &fe - &m_files[0];
+ 		return file_path(index);
+ 	}
+-- 
+1.9.1
+

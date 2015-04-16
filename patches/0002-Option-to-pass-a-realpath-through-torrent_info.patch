@@ -1,0 +1,59 @@
+From 0f87adddf033852cd1a484842b82607e7fea288b Mon Sep 17 00:00:00 2001
+From: Valentin Dudouyt <valentin.dudouyt@gmail.com>
+Date: Thu, 16 Apr 2015 12:06:58 +0600
+Subject: [PATCH 2/2] Option to pass a real_path through the torrent_info
+
+---
+ include/libtorrent/file_storage.hpp | 2 ++
+ include/libtorrent/torrent_info.hpp | 5 +++++
+ src/file_storage.cpp                | 5 +++++
+ 3 files changed, 12 insertions(+)
+
+diff --git a/include/libtorrent/file_storage.hpp b/include/libtorrent/file_storage.hpp
+index e58d2c8..57cd8a4 100644
+--- a/include/libtorrent/file_storage.hpp
++++ b/include/libtorrent/file_storage.hpp
+@@ -300,6 +300,8 @@ namespace libtorrent
+ 		// that filenames are expected to be UTF-8 encoded.
+ 		void rename_file(int index, std::string const& new_filename);
+ 
++		void set_real_path(int index, std::string const& real_path);
++
+ 		// this is a low-level function that sets the name of a file
+ 		// by making it reference a buffer that is not owned by the file_storage.
+ 		// it's an optimization used when loading .torrent files, to not
+diff --git a/include/libtorrent/torrent_info.hpp b/include/libtorrent/torrent_info.hpp
+index 5ad3e38..e0d4281 100644
+--- a/include/libtorrent/torrent_info.hpp
++++ b/include/libtorrent/torrent_info.hpp
+@@ -405,6 +405,11 @@ namespace libtorrent
+ 			copy_on_write();
+ 			m_files.rename_file(index, new_filename);
+ 		}
++
++		void set_real_path(int index, std::string const& real_path)
++		{
++			m_files.set_real_path(index, real_path);
++		}
+ #ifndef TORRENT_NO_DEPRECATE
+ #if TORRENT_USE_WSTRING
+ 		// all wstring APIs are deprecated since 0.16.11
+diff --git a/src/file_storage.cpp b/src/file_storage.cpp
+index 1bc36a9..466afb0 100644
+--- a/src/file_storage.cpp
++++ b/src/file_storage.cpp
+@@ -242,6 +242,11 @@ namespace libtorrent
+ 		update_path_index(m_files[index]);
+ 	}
+ 
++	void file_storage::set_real_path(int index, std::string const& real_path)
++	{
++		m_files[index].real_path = real_path;
++	}
++
+ 	void file_storage::rename_file_borrow(int index, char const* new_filename, int len)
+ 	{
+ 		TORRENT_ASSERT_PRECOND(index >= 0 && index < int(m_files.size()));
+-- 
+1.9.1
+

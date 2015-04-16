@@ -1,0 +1,4 @@
+LIBTORRENT_PATH=../libtorrent-rasterbar-1.0.4
+
+%: %.cpp
+	g++ $< -DTORRENT_USE_OPENSSL -DBOOST_ASIO_HASH_MAP_BUCKETS=1021 -DBOOST_EXCEPTION_DISABLE -DBOOST_ASIO_ENABLE_CANCELIO -DBOOST_ASIO_DYN_LINK -DTORRENT_LINKING_SHARED -I$(LIBTORRENT_PATH)/include/ $(LIBTORRENT_PATH)/src/.libs/libtorrent-rasterbar.a -lboost_system -lcrypto -lssl -lpthread -o $@
