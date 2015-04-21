@@ -1,0 +1,13 @@
+diff --git a/src/http_parser.cpp b/src/http_parser.cpp
+index 408f977..9529fb0 100644
+--- a/src/http_parser.cpp
++++ b/src/http_parser.cpp
+@@ -1066,7 +1066,7 @@ bool parser::parse_multipart_form_data(ihash_multimap& dict,
+                     // reached the end of the value -> check if it's important
+                     if (boost::algorithm::iequals(header_name, types::HEADER_CONTENT_TYPE)) {
+                         // only keep fields that have a text type or no type
+-                        save_current_field = boost::algorithm::iequals(header_value.substr(0, 5), "text/");
++                        save_current_field = true;
+                     } else if (boost::algorithm::iequals(header_name, types::HEADER_CONTENT_DISPOSITION)) {
+                         // get current field from content-disposition header
+                         std::size_t name_pos = header_value.find("name=\"");
