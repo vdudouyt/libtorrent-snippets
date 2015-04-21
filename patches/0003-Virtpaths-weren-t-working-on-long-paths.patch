@@ -1,0 +1,88 @@
+From ea06ca61c77c43737d0909d71794d4b72ccf8aa9 Mon Sep 17 00:00:00 2001
+From: Valentin Dudouyt <valentin.dudouyt@gmail.com>
+Date: Tue, 21 Apr 2015 08:57:33 +0600
+Subject: [PATCH 3/3] Virtpaths weren't working on long paths
+
+---
+ include/libtorrent/file_storage.hpp |  1 +
+ src/create_torrent.cpp              | 10 ++++++----
+ src/file_storage.cpp                | 22 ++++++++++++++++++++++
+ 3 files changed, 29 insertions(+), 4 deletions(-)
+
+diff --git a/include/libtorrent/file_storage.hpp b/include/libtorrent/file_storage.hpp
+index 57cd8a4..bd88ad3 100644
+--- a/include/libtorrent/file_storage.hpp
++++ b/include/libtorrent/file_storage.hpp
+@@ -451,6 +451,7 @@ namespace libtorrent
+ 		sha1_hash hash(int index) const;
+ 		std::string const& symlink(int index) const;
+ 		time_t mtime(int index) const;
++		std::string virt_path(int index, std::string const& save_path = "") const;
+ 		std::string file_path(int index, std::string const& save_path = "") const;
+ 		std::string file_name(int index) const;
+ 		size_type file_size(int index) const;
+diff --git a/src/create_torrent.cpp b/src/create_torrent.cpp
+index c814be8..9945a38 100644
+--- a/src/create_torrent.cpp
++++ b/src/create_torrent.cpp
+@@ -280,7 +280,7 @@ namespace libtorrent
+ 		// return instead of crash in release mode
+ 		if (fs.num_files() == 0) return;
+ 
+-		if (!m_multifile && has_parent_path(m_files.file_path(0))) m_multifile = true;
++		if (!m_multifile && has_parent_path(m_files.virt_path(0))) m_multifile = true;
+ 
+ 		// a piece_size of 0 means automatic
+ 		if (piece_size == 0 && !m_merkle_torrent)
+@@ -508,10 +508,12 @@ namespace libtorrent
+ 					file_e["length"] = m_files.file_size(i);
+ 					entry& path_e = file_e["path"];
+ 
+-					TORRENT_ASSERT(has_parent_path(m_files.file_path(i)));
++					TORRENT_ASSERT(has_parent_path(m_files.virtpath(i)));
+ 
+-					std::string split = split_path(m_files.file_path(i));
+-					TORRENT_ASSERT(split.c_str() == m_files.name());
++					std::string split = split_path("foo.bin");
++					std::cout << "------------------" << std::endl;
++					std::cout << "split=" << split << std::endl;
++					//TORRENT_ASSERT(split.c_str() == m_files.name());
+ 
+ 					for (char const* e = next_path_element(split.c_str());
+ 						e != 0; e = next_path_element(e))
+diff --git a/src/file_storage.cpp b/src/file_storage.cpp
+index 466afb0..12ad8a4 100644
+--- a/src/file_storage.cpp
++++ b/src/file_storage.cpp
+@@ -539,6 +539,28 @@ namespace libtorrent
+ 		return m_file_base[index];
+ 	}
+ 
++	std::string file_storage::virt_path(int index, std::string const& save_path) const
++	{
++		TORRENT_ASSERT_PRECOND(index >= 0 && index < int(m_files.size()));
++		internal_file_entry const& fe = m_files[index];
++
++		// -2 means this is an absolute path filename
++		if (fe.path_index == -2) return fe.filename();
++
++		// -1 means no path
++		if (fe.path_index == -1) return combine_path(save_path, fe.filename());
++
++		if (fe.no_root_dir)
++			return combine_path(save_path
++				, combine_path(m_paths[fe.path_index]
++				, fe.filename()));
++
++		return combine_path(save_path
++			, combine_path(m_name
++			, combine_path(m_paths[fe.path_index]
++			, fe.filename())));
++	}
++
+ 	std::string file_storage::file_path(int index, std::string const& save_path) const
+ 	{
+ 		TORRENT_ASSERT_PRECOND(index >= 0 && index < int(m_files.size()));
+-- 
+1.9.1
+
